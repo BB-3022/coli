@@ -1,0 +1,65 @@
+package kr.spring.service;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import kr.spring.entity.Article;
+import kr.spring.entity.Member;
+import kr.spring.entity.MyGallery;
+import kr.spring.repository.MyGalleryRepository;
+import lombok.Data;
+
+@Data
+@Service
+public class MyGalleryServiceImpl implements MyGalleryService{
+
+      private static final String UPLOAD_DIRECTORY = "src/main/webapp/myUploadFile"; 
+      
+      @Override
+      public List<String> getAllImages() {
+          File dir = new File(UPLOAD_DIRECTORY);
+          File[] fileList = dir.listFiles();
+          if (fileList == null) {
+              throw new IllegalStateException("Cannot list files for directory: " + UPLOAD_DIRECTORY);
+          }
+          // 파일을 마지막 수정된 날짜 순으로 정렬합니다. (가장 최근 수정된 파일이 리스트의 끝에 오게 됩니다.)
+          List<File> sortedFiles = Arrays.stream(fileList)
+              .filter(File::isFile)
+              .sorted(Comparator.comparingLong(File::lastModified).reversed())
+              .collect(Collectors.toList());
+
+          List<MyImageInfo> images = sortedFiles.stream()
+        	        .map(file -> new MyImageInfo(file.getName(), formatDate(file.lastModified())))
+        	        .collect(Collectors.toList());
+
+        	    return images;
+
+      }
+      
+      private String formatDate(long millis) {
+    	    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	    return formatter.format(new Date(millis));
+    	}
+
+    	public class MyImageInfo {
+    	    private String fileName;
+    	    private String modifiedDate;
+
+    	    // 생성자, getter, setter
+    	}
+}
